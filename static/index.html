@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Big Two</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preload" href="ding-played.wav" as="audio" type="audio/wav">
+    <link rel="preload" href="ding-turn.wav" as="audio" type="audio/wav">
+</head>
+<body>
+    <button id="rules-button" style="position: fixed; top: 10px; right: 10px; z-index: 1001;">Rules</button>
+
+    <div id="rules-modal" class="modal-backdrop" style="display: none;">
+        <div class="modal-content">
+            <span class="modal-close-button">&times;</span>
+            <h2>Big Two Rules</h2>
+            <div>
+                <p><strong>Objective:</strong> Be the first player to get rid of all your cards.</p>
+                
+                <h3>Card Ranking (High to Low):</h3>
+                <p>2 > A > K > Q > J > 10 > 9 > 8 > 7 > 6 > 5 > 4 > 3</p>
+                
+                <h3>Suit Ranking (High to Low):</h3>
+                <p>Spades (♠) > Hearts (♥) > Clubs (♣) > Diamonds (♦)</p>
+                
+                <h3>Starting Play:</h3>
+                <p>The player holding the 3 of Diamonds (3♦) starts the first trick by playing it (usually as part of a valid hand).</p>
+                
+                <h3>Valid Hands to Play:</h3>
+                <ul>
+                    <li><strong>Single:</strong> One card.</li>
+                    <li><strong>Pair:</strong> Two cards of the same rank.</li>
+                    <li><strong>Triple:</strong> Three cards of the same rank.</li>
+                    <li><strong>5-Card Hands (Poker Hands):</strong>
+                        <ul>
+                            <li><strong>Straight:</strong> Five cards in sequence (e.g., 3-4-5-6-7). A-2-3-4-5 is a valid straight (5 is high card). 2-3-4-5-6 is the highest straight.</li>
+                            <li><strong>Flush:</strong> Five cards of the same suit, not in sequence. Highest rank card determines strength, then suit of highest card.</li>
+                            <li><strong>Full House:</strong> A triple and a pair (e.g., 7-7-7-Q-Q). Rank of the triple determines strength.</li>
+                            <li><strong>Four of a Kind + One Card (Bomb):</strong> Four cards of the same rank, plus any fifth card (e.g., K-K-K-K-5). Beats any smaller hand except a Straight Flush.</li>
+                            <li><strong>Straight Flush (Bomb):</strong> Five cards in sequence of the same suit. The ultimate hand, beats all other hands.</li>
+                        </ul>
+                    </li>
+                </ul>
+
+                <h3>Playing the Game:</h3>
+                <p>Subsequent players must play the same number of cards as the previous hand, forming a higher-ranking hand of the same type. If a player cannot or chooses not to play, they must pass. If all other players pass, the player who played the last hand starts a new trick with any valid hand.</p>
+            </div>
+        </div>
+    </div>
+
+    <h1>Big Two Card Game</h1>
+    <div id="score-table-area" style="margin-bottom: 10px;">
+        <!-- Score table will be rendered here by JavaScript -->
+    </div>
+    <div id="game-messages" class="messages-area"></div>
+
+    <div id="alias-modal" class="modal-backdrop" style="display: flex;">
+        <div class="modal-content" style="text-align: center;">
+            <h2>Welcome! Please Enter Your Name</h2>
+            <input type="text" id="alias-input" placeholder="Your Name" style="padding: 8px; margin-bottom: 10px; width: 80%;">
+            <button id="submit-alias-button" style="padding: 10px 20px;">Join Game</button>
+            <p id="alias-error" style="color: red; margin-top: 10px;"></p>
+        </div>
+    </div>
+
+    <div id="main-container">
+        <div id="top-game-row"> 
+            <div id="players-area">
+                <h2>Players</h2>
+                <!-- Player info will be populated here -->
+            </div>
+            
+            <div id="table">
+                <h2>Table</h2>
+                <div id="last-played-hand-info"></div>
+                <div id="last-played-cards" class="cards-display-area"></div>
+                <div id="turn-info"></div>
+                <div id="pass-count-info"></div>
+            </div>
+
+            <div id="messaging-area">
+                <h2>Chat</h2>
+                <div id="chat-log"></div>
+                <div id="chat-input-controls">
+                    <input type="text" id="chat-input" placeholder="Type message...">
+                    <button onclick="sendChatMessage()">Send</button>
+                </div>
+            </div>
+        </div> <!-- End of top-game-row -->
+
+        <div id="game-over-screen" style="display: none;">
+            <div id="game-over-content">
+                <h2>Game Over!</h2>
+                <p id="winner-announcement"></p>
+                <h3>Scores:</h3>
+                <ul id="player-scores"></ul>
+                <button id="new-game-button" onclick="sendNewGameRequest()">New Game</button>
+            </div>
+        </div>
+
+        <div id="player-area"> <!-- This is now effectively the bottom row -->
+            <h2>Your Hand</h2>
+            <div id="player-action-messages" class="messages-area" style="color: red; min-height: 1.2em; margin-bottom: 5px;"></div>
+            <div id="player-hand" class="cards-display-area">
+                <!-- Player's cards will appear here -->
+            </div>
+            <div id="player-controls">
+                <button id="sort-by-rank-button">Sort by Rank</button>
+                <button id="sort-by-suit-button">Sort by Suit</button>
+                <button id="play-selected-button" onclick="sendPlayAction()">Play Selected Cards</button>
+                <button id="pass-turn-button">Pass Turn</button>
+            </div>
+        </div>
+
+        <!-- Old #game-area div is removed as its children are reorganized -->
+        <!-- Old #messaging-area div is moved into top-game-row -->
+
+    </div> <!-- End of main-container -->
+
+    <div id="audio-elements" style="display: none;">
+        <audio id="audioDingTurn" src="ding-turn.wav" preload="auto"></audio>
+        <audio id="audioDingPlayed" src="ding-played.wav" preload="auto"></audio>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html> 
