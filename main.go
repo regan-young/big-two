@@ -47,8 +47,8 @@ func parseCardsFromClientData(cardsData interface{}) (Deck, error) {
 			return nil, fmt.Errorf("card data item is not a map")
 		}
 
-		rankVal, rankOk := cardMap["Rank"].(float64) // JSON numbers are float64 by default
-		suitVal, suitOk := cardMap["Suit"].(float64)
+		rankVal, rankOk := cardMap["rank"].(float64) // JSON numbers are float64 by default
+		suitVal, suitOk := cardMap["suit"].(float64)
 
 		if !rankOk || !suitOk {
 			return nil, fmt.Errorf("card rank or suit is missing or not a number: RankOk=%v, SuitOk=%v, cardMap=%v", rankOk, suitOk, cardMap)
