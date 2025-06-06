@@ -232,7 +232,10 @@ func (re *BigTwoRuleEngine) isFlush(cards Deck) (bool, Suit, Rank) {
 			return false, -1, -1
 		}
 	}
-	return true, firstSuit, cards[4].Rank // Suit of the flush, Rank of its highest card (cards sorted)
+	// For a flush, the effective rank is the rank of the highest card,
+	// and the effective suit is the suit of that card (which is the suit of the flush).
+	// We explicitly use the highest card (cards[4]) for both properties for clarity.
+	return true, cards[4].Suit, cards[4].Rank
 }
 
 func (re *BigTwoRuleEngine) isFullHouse(cards Deck) (bool, Rank) {

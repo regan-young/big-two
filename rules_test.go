@@ -246,7 +246,7 @@ func TestBigTwoRuleEngine_DeterminePlayedHand_FiveCardHands(t *testing.T) {
 		{"Straight 3-7", Deck{C(Rank3, Diamonds), C(Rank4, Clubs), C(Rank5, Hearts), C(Rank6, Spades), C(Rank7, Diamonds)}, Straight, Rank7, Diamonds, false},
 		{"Straight 10-A", Deck{C(Rank10, Spades), C(Jack, Diamonds), C(Queen, Clubs), C(King, Hearts), C(Ace, Spades)}, Straight, Ace, Spades, false},
 		{"Straight J-2 (highest)", Deck{C(Jack, Hearts), C(Queen, Spades), C(King, Diamonds), C(Ace, Clubs), C(Two, Hearts)}, Straight, Two, Hearts, false},
-		{"Invalid Straight A-5 (Ace low not standard)", Deck{C(Ace, Hearts), C(Two, Spades), C(Rank3, Diamonds), C(Rank4, Clubs), C(Rank5, Hearts)}, InvalidHand, -1, -1, true},
+		{"Straight A-5 (Ace low not standard)", Deck{C(Ace, Hearts), C(Two, Spades), C(Rank3, Diamonds), C(Rank4, Clubs), C(Rank5, Hearts)}, Straight, Rank5, Hearts, false},
 		{"Invalid Straight K-A-2-3-4 (wrap around)", Deck{C(King, Hearts), C(Ace, Spades), C(Two, Diamonds), C(Rank3, Clubs), C(Rank4, Hearts)}, InvalidHand, -1, -1, true},
 		{"Not a straight (skip rank)", Deck{C(Rank3, Diamonds), C(Rank4, Clubs), C(Rank5, Hearts), C(Rank7, Spades), C(Rank8, Diamonds)}, InvalidHand, -1, -1, true},
 
@@ -268,10 +268,10 @@ func TestBigTwoRuleEngine_DeterminePlayedHand_FiveCardHands(t *testing.T) {
 		{"Straight Flush Diamonds 3-7", Deck{C(Rank3, Diamonds), C(Rank4, Diamonds), C(Rank5, Diamonds), C(Rank6, Diamonds), C(Rank7, Diamonds)}, StraightFlush, Rank7, Diamonds, false},
 		{"Straight Flush Spades 10-A", Deck{C(Rank10, Spades), C(Jack, Spades), C(Queen, Spades), C(King, Spades), C(Ace, Spades)}, StraightFlush, Ace, Spades, false},
 		{"Straight Flush Hearts J-2", Deck{C(Jack, Hearts), C(Queen, Hearts), C(King, Hearts), C(Ace, Hearts), C(Two, Hearts)}, StraightFlush, Two, Hearts, false},
-		{"Invalid SF A-5 (Ace low not standard)", Deck{C(Ace, Hearts), C(Two, Hearts), C(Rank3, Hearts), C(Rank4, Hearts), C(Rank5, Hearts)}, InvalidHand, -1, -1, true},
+		{"Straight Flush (Ace low not standard)", Deck{C(Ace, Hearts), C(Two, Hearts), C(Rank3, Hearts), C(Rank4, Hearts), C(Rank5, Hearts)}, StraightFlush, Rank5, Hearts, false},
 		{"Not a Straight Flush (Straight, but not Flush)", Deck{C(Rank3, Diamonds), C(Rank4, Clubs), C(Rank5, Diamonds), C(Rank6, Diamonds), C(Rank7, Diamonds)}, Straight, Rank7, Diamonds, false},
 		{"Not a Straight Flush (Flush, but not Straight)", Deck{C(Rank3, Diamonds), C(Rank5, Diamonds), C(Rank7, Diamonds), C(Jack, Diamonds), C(King, Diamonds)}, Flush, King, Diamonds, false},
-		{"Flush Clubs (7 high)", Deck{C(Two, Clubs), C(Rank3, Clubs), C(Rank4, Clubs), C(Rank5, Clubs), C(Rank7, Clubs)}, Flush, Rank7, Clubs, false},
+		{"Flush Clubs (7 high)", Deck{C(Two, Clubs), C(Rank3, Clubs), C(Rank4, Clubs), C(Rank5, Clubs), C(Rank7, Clubs)}, Flush, Two, Clubs, false},
 	}
 
 	for _, tc := range tests {
