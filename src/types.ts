@@ -1,56 +1,66 @@
 // Interfaces for game objects
 export interface Card {
-    rank: number;
-    suit: number;
+    readonly rank: number;
+    readonly suit: number;
 }
 
 export interface PlayerInfo {
-    id: string;
-    name: string;
-    cardCount: number;
-    hasPassed: boolean;
+    readonly id: string;
+    readonly name: string;
+    readonly cardCount: number;
+    readonly hasPassed: boolean;
 }
 
 export interface PlayedHand {
-    cards: Card[];
-    playerId: string;
-    handType: number;
-    handTypeString: string;
-    rank: number;
-    EffectiveRank: number;
-    EffectiveSuit: number;
+    readonly cards: readonly Card[];
+    readonly playerId: string;
+    readonly handType: number;
+    readonly handTypeString: string;
+    readonly rank: number;
+    readonly EffectiveRank: number;
+    readonly EffectiveSuit: number;
 }
 
 // Server Message Interfaces
 export interface GameStateMessage {
-    type: "gameState";
-    hand?: Card[] | null; 
-    lastPlayedHand: PlayedHand | null;
-    yourPlayerId: string | null;
-    currentPlayerId: string | null;
-    currentPlayerName?: string;
-    passCount: number;
-    playersInfo?: PlayerInfo[];
-    isGameOver: boolean;
-    scores?: { [playerId: string]: number };
-    roundNumber?: number;
-    targetScore?: number;
-    isMatchOver?: boolean;
-    overallWinnerId?: string | null;
-    roundScoresHistory?: { [playerId: string]: number }[];
-    winnerId: string | null; 
-    gameMessage?: string;
+    readonly type: "gameState";
+    readonly hand?: readonly Card[] | null;
+    readonly lastPlayedHand: PlayedHand | null;
+    readonly yourPlayerId: string | null;
+    readonly currentPlayerId: string | null;
+    readonly currentPlayerName?: string;
+    readonly passCount: number;
+    readonly playersInfo?: readonly PlayerInfo[];
+    readonly isGameOver: boolean;
+    readonly scores?: { readonly [playerId: string]: number };
+    readonly roundNumber?: number;
+    readonly targetScore?: number;
+    readonly isMatchOver?: boolean;
+    readonly overallWinnerId?: string | null;
+    readonly roundScoresHistory?: { [playerId: string]: number }[];
+    readonly winnerId: string | null; 
+    readonly gameMessage?: string;
 }
 
 export interface ChatMessage {
-    type: "chat";
-    sender: string;
-    content: string;
+    readonly type: "chat";
+    readonly sender: string;
+    readonly content: string;
+}
+
+export interface SystemMessage {
+    readonly type: "systemMessage";
+    readonly content: string;
 }
 
 export interface ErrorMessage {
-    type: "error";
-    content: string;
+    readonly type: "error";
+    readonly content: string;
+    readonly context?: string;
 }
 
-export type ServerMessage = GameStateMessage | ChatMessage | ErrorMessage; 
+export interface ActionSuccessMessage {
+    readonly type: "actionSuccess";
+}
+
+export type ServerMessage = GameStateMessage | ChatMessage | ErrorMessage | SystemMessage | ActionSuccessMessage; 

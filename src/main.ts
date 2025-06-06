@@ -2,6 +2,8 @@ import svgSpriteContent from './assets/cards.svg?raw';
 import { Card, PlayerInfo, PlayedHand, ServerMessage } from './types';
 import * as domElements from './domElements';
 import * as constants from './constants';
+import { createApp } from 'vue';
+import App from './App.vue';
 
 // WebSocket and Game State Globals
 let socket: WebSocket | null = null;
@@ -9,21 +11,51 @@ let gCurrentPlayerHand: Card[] = [];
 let gYourPlayerId: string | null = null;
 let gPlayersInfo: PlayerInfo[] = [];
 let gLastPlayedHand: PlayedHand | null = null;
-let gCurrentPlayerId: string | null = null; // ID of the player whose turn it is
+let gCurrentPlayerId: string | null = null;
 let gPassCount: number = 0;
-let gIsGameOver: boolean = false; // Round over
-let gScores: { [playerId: string]: number } = {};        // PlayerID -> Total Score for the match
-let gRoundScoresHistory: { [playerId: string]: number }[] = []; // Array of round score objects (each is PlayerID -> ScoreForThatRound)
+let gIsGameOver: boolean = false;
+let gScores: { [playerId: string]: number } = {};
+let gRoundScoresHistory: { [playerId: string]: number }[] = [];
 let gRoundNumber: number = 1;
 let gTargetScore: number = 100;
-let gIsMatchOver: boolean = false; // Match over
+let gIsMatchOver: boolean = false;
 
 // UI State Globals
 let gAutoPassEnabled: boolean = false;
 let gIsMyTurn: boolean = false;
-let gPreviousCurrentPlayerId: string | null = null; // For turn sound logic
+let gPreviousCurrentPlayerId: string | null = null;
 let gAudioUnlocked: boolean = false;
-let gCurrentSortPreference: 'rank' | 'suit' = 'rank'; // Added for persisting sort order
+export let gCurrentSortPreference: 'rank' | 'suit' = 'rank';
+
+// Setter functions for global state, to be called by App.vue
+export function setPlayersInfo(newPlayersInfo: readonly PlayerInfo[]) {
+    gPlayersInfo = newPlayersInfo ? [...newPlayersInfo] : [];
+}
+export function setYourPlayerId(id: string | null) { gYourPlayerId = id; }
+export function setCurrentPlayerId(id: string | null) { gCurrentPlayerId = id; }
+export function setIsMyTurn(isTurn: boolean) { gIsMyTurn = isTurn; }
+export function setRoundNumber(roundNum: number) { gRoundNumber = roundNum; }
+export function setTargetScore(score: number) { gTargetScore = score; }
+export function setIsMatchOver(isOver: boolean) { gIsMatchOver = isOver; }
+export function setScores(newScores: { readonly [playerId: string]: number } | null ) {
+    gScores = newScores ? { ...newScores } : {}; // Create mutable copy
+}
+export function setRoundScoresHistory(history: readonly { readonly [playerId: string]: number }[] | null) {
+    gRoundScoresHistory = history ? history.map(item => ({ ...item })) : [];
+}
+export function setLastPlayedHand(hand: PlayedHand | null) {
+    // Ensure deep copy for nested cards array if present
+    gLastPlayedHand = hand ? { ...hand, cards: hand.cards ? [...hand.cards] : [] } : null;
+}
+export function setPassCount(count: number) { gPassCount = count; }
+export function setIsGameOver(isOver: boolean) { gIsGameOver = isOver; }
+export function setAutoPassEnabled(isEnabled: boolean) { gAutoPassEnabled = isEnabled; }
+export function setCurrentPlayerHand(hand: readonly Card[] | null) {
+    gCurrentPlayerHand = hand ? [...hand] : [];
+}
+export function setPreviousCurrentPlayerId(id: string | null) { gPreviousCurrentPlayerId = id; }
+// gCurrentSortPreference is updated by sortHandByRank/Suit, which are already exported
+// gAudioUnlocked is updated by attemptAudioUnlock, not directly by App.vue state messages
 
 function connectWebSocket() {
     socket = new WebSocket('ws://' + window.location.host + '/ws');
@@ -45,155 +77,38 @@ function connectWebSocket() {
     };
 
     socket.onmessage = function(event: MessageEvent) {
-        console.log("Message from server: ", event.data);
+        console.log("Message from server (main.ts - will be IGNORED by switch): ", event.data);
         const parsedData = JSON.parse(event.data);
 
         if (parsedData && typeof parsedData === 'object' && parsedData.type && typeof parsedData.type === 'string') {
-            const message = parsedData as ServerMessage;
+            // const message = parsedData as ServerMessage;
 
             // Clear previous game messages on any new message from server that isn't an error
-            if (message.type !== 'error') {
-                if (domElements.playerActionMessagesDiv) domElements.playerActionMessagesDiv.innerHTML = '';
-            }
+            // COMMENTED OUT - App.vue will handle message effects
+            // if (message.type !== 'error') {
+            //     if (domElements.playerActionMessagesDiv) domElements.playerActionMessagesDiv.innerHTML = '';
+            // }
 
+            // COMMENTED OUT - App.vue's watcher now handles message processing logic
+            /*
             switch (message.type) {
                 case "gameState":
-                    // message is now GameStateMessage
-                    console.log("Received gameState:", message);
-                    gPlayersInfo = message.playersInfo || []; 
-                    
-                    gYourPlayerId = message.yourPlayerId;
-                    gCurrentPlayerId = message.currentPlayerId; 
-                    gIsMyTurn = (message.currentPlayerId === gYourPlayerId && gYourPlayerId !== null);
-                    gRoundNumber = message.roundNumber || 1;
-                    gTargetScore = message.targetScore || 100; 
-                    gIsMatchOver = message.isMatchOver || false;
-                    gScores = message.scores || {};
-                    gRoundScoresHistory = message.roundScoresHistory || []; 
-                    gLastPlayedHand = message.lastPlayedHand;
-                    gPassCount = message.passCount;
-                    gIsGameOver = message.isGameOver;
-
-                    if (gAutoPassEnabled) {
-                        const trickWinnerIsStartingNewTrick = gPassCount === 0 &&
-                            gLastPlayedHand && gLastPlayedHand.cards && gLastPlayedHand.cards.length > 0 &&
-                            gLastPlayedHand.playerId === gCurrentPlayerId;
-                        
-                        const veryFirstTurnOfRound = gPassCount === 0 && 
-                                                     (!gLastPlayedHand || !gLastPlayedHand.cards || gLastPlayedHand.cards.length === 0);
-
-                        if (trickWinnerIsStartingNewTrick || veryFirstTurnOfRound) {
-                            console.log("Auto-pass is being reset because a new trick is starting or it's the beginning of a round.");
-                            gAutoPassEnabled = false;
-                        }
-                    }
-
-                    gCurrentPlayerHand = message.hand ? [...message.hand] : [];
-                    
-                    // Apply persistent sort order BEFORE updating the hand display
-                    if (gCurrentSortPreference === 'suit') {
-                        sortHandBySuitInternal();
-                    } else {
-                        sortHandByRankInternal(); // Default to rank
-                    }
-
-                    let baseTitle = "Big Two Game";
-                    if (gYourPlayerId) {
-                        const playerInfo = gPlayersInfo.find(p => p.id === gYourPlayerId);
-                        const playerName = playerInfo ? playerInfo.name : gYourPlayerId;
-                        baseTitle = playerName ? `${playerName} - Big Two (R${gRoundNumber})` : `${gYourPlayerId} - Big Two (R${gRoundNumber})`;
-                    }
-                    document.title = (gIsMyTurn && !message.isGameOver && !gIsMatchOver) ? `YOUR TURN! - ${baseTitle}` : baseTitle;
-
-                    if (message.isMatchOver) {
-                        displayGameOver(message.winnerId, message.scores || {}, message.playersInfo || [], true, message.overallWinnerId ?? null, message.roundScoresHistory || []);
-                        const playButton = document.getElementById('play-selected-button') as HTMLButtonElement | null;
-                        if (playButton) playButton.disabled = true;
-                        if (domElements.passTurnButton) domElements.passTurnButton.disabled = true;
-                        gAutoPassEnabled = false; 
-                    } else if (message.isGameOver) { 
-                        displayGameOver(message.winnerId, message.scores || {}, message.playersInfo || [], false, null, message.roundScoresHistory || []);
-                        const playButton = document.getElementById('play-selected-button') as HTMLButtonElement | null;
-                        if (playButton) playButton.disabled = true;
-                        if (domElements.passTurnButton) domElements.passTurnButton.disabled = true;
-                        gAutoPassEnabled = false; 
-                    } else {
-                        const gameOverScreen = document.getElementById('game-over-screen') as HTMLDivElement | null;
-                        if (gameOverScreen) gameOverScreen.style.display = 'none';
-                        
-                        const playButton = document.getElementById('play-selected-button') as HTMLButtonElement | null;
-                        if (playButton) playButton.disabled = false;
-                        if (domElements.passTurnButton) domElements.passTurnButton.disabled = false;
-
-                        if (gIsMyTurn && gAutoPassEnabled) {
-                            sendPassAction(); 
-                        } 
-
-                        updatePlayerHand(gCurrentPlayerHand, gYourPlayerId); 
-                        updateLastPlayed(gLastPlayedHand, gPlayersInfo); 
-                        updateTurnInfo(message.currentPlayerName, gPassCount, gCurrentPlayerId);
-                        updatePlayersArea(gPlayersInfo, gYourPlayerId, gCurrentPlayerId); 
-
-                        // Update player area background based on turn
-                        const playerAreaDiv = document.getElementById('player-area');
-                        if (playerAreaDiv) {
-                            if (gIsMyTurn) {
-                                playerAreaDiv.classList.add('active-player-turn');
-                            } else {
-                                playerAreaDiv.classList.remove('active-player-turn');
-                            }
-                        }
-                    }
-
-                    updateScoreTable(gPlayersInfo, gRoundScoresHistory, gRoundNumber, gScores, gTargetScore); 
-
-                    if (message.gameMessage) {
-                        updateGameMessages(message.gameMessage, false, 'general');
-                    }
-                    updatePassButtonAppearance(); 
-
-                    const newCurrentPlayerId = message.currentPlayerId;
-
-                    if (gAudioUnlocked && newCurrentPlayerId !== gPreviousCurrentPlayerId && gPreviousCurrentPlayerId !== null) {
-                        // Turn has changed
-                        if (newCurrentPlayerId === gYourPlayerId) { // It's now YOUR turn
-                            if (domElements.audioDingTurn) {
-                                domElements.audioDingTurn.currentTime = 0; 
-                                domElements.audioDingTurn.play().catch((error: any) => {
-                                    console.warn("Audio play failed for your turn:", error);
-                                });
-                            }
-                        } else { // It's now someone else's turn
-                            if (domElements.audioDingPlayed) {
-                                domElements.audioDingPlayed.currentTime = 0;
-                                domElements.audioDingPlayed.play().catch((error: any) => {
-                                    console.warn("Audio play failed for opponent's turn:", error);
-                                });
-                            }
-                        }
-                    }
-                    gPreviousCurrentPlayerId = newCurrentPlayerId; 
-
-                    gIsMyTurn = (message.currentPlayerId === gYourPlayerId && gYourPlayerId !== null);
+                    // ... (all original gameState processing logic)
                     break;
                 case "chat":
-                    const chatEntry = document.createElement('p');
-                    chatEntry.textContent = `${message.sender}: ${message.content}`;
-                    if (domElements.chatLogDiv) {
-                        domElements.chatLogDiv.appendChild(chatEntry);
-                        domElements.chatLogDiv.scrollTop = domElements.chatLogDiv.scrollHeight; // Scroll to bottom
-                    }
+                    // ... (all original chat processing logic)
                     break;
                 case "error":
-                    updateGameMessages(`Error: ${message.content}`, true, 'action');
+                    // ... (all original error processing logic)
                     break;
                 default:
-                    console.log("Unknown message type received from server: ", message);
+                    console.log("Unknown message type received from server (main.ts - IGNORED): ", message);
                     break;
             }
+            */
         } else {
-            console.error("Received malformed message from server (no type or not an object):", parsedData);
-            updateGameMessages("Received malformed message from server.", true, 'general');
+            console.error("Received malformed message from server (main.ts - IGNORED):", parsedData);
+            // updateGameMessages("Received malformed message from server.", true, 'general'); // Also commented out
         }
     };
 
@@ -209,7 +124,7 @@ function connectWebSocket() {
     };
 }
 
-function updatePlayerHand(cardsToDisplay: Card[], yourId: string | null) {
+function updatePlayerHand(cardsToDisplay: readonly Card[], yourId: string | null) {
     // Store current selections before clearing
     const previouslySelectedCards: { rank: string | undefined, suit: string | undefined }[] = [];
     if (domElements.playerHandDiv) {
@@ -258,7 +173,7 @@ function updatePlayerHand(cardsToDisplay: Card[], yourId: string | null) {
     });
 }
 
-function updateLastPlayed(lastPlayedHand: PlayedHand | null, playersInfo: PlayerInfo[]) {
+function updateLastPlayed(lastPlayedHand: PlayedHand | null, playersInfo: readonly PlayerInfo[]) {
     const targetDiv = domElements.lastPlayedDiv;
     if (!targetDiv) { 
         console.error("lastPlayedDiv is null and is required for updateLastPlayed.");
@@ -319,7 +234,7 @@ function updateTurnInfo(currentPlayerName: string | undefined, passCount: number
     if (passCountInfoP) passCountInfoP.textContent = passCount > 0 ? `${passCount} player(s) passed.` : "";
 }
 
-function updatePlayersArea(playersInfo: PlayerInfo[], yourPlayerId: string | null, currentPlayerIdFromGame: string | null) {
+function updatePlayersArea(playersInfo: readonly PlayerInfo[], yourPlayerId: string | null, currentPlayerIdFromGame: string | null) {
     const targetDiv = domElements.playersAreaDiv;
     if (!targetDiv) {
         console.error("playersAreaDiv is null and is required for updatePlayersArea.");
@@ -577,8 +492,8 @@ function attemptAudioUnlock() {
 
 function displayGameOver(
     roundWinnerId: string | null, 
-    currentScores: { [playerId: string]: number }, 
-    playersInfoFromServer: PlayerInfo[], 
+    currentScores: { readonly [playerId: string]: number }, 
+    playersInfoFromServer: readonly PlayerInfo[], 
     isMatchOver: boolean, 
     overallMatchWinnerId: string | null, 
     roundScoresHistory: { [playerId: string]: number }[]
@@ -598,9 +513,13 @@ function displayGameOver(
 
     // Ensure player names are up-to-date for the display
     const getPlayerName = (id: string | null): string => {
-        if (id === null) return "Unknown";
-        return playersInfoFromServer.find(p => p.id === id)?.name || id;
-    }
+        if (!id) return "Unknown";
+        const player = playersInfoFromServer.find(p => p.id === id);
+        return player ? player.name : id;
+    };
+
+    const winnerName = getPlayerName(roundWinnerId);
+    const overallWinnerName = getPlayerName(overallMatchWinnerId);
 
     gameOverContent.style.textAlign = 'center'; // Ensure content is centered
     overallWinnerInfoP.innerHTML = ''; // Clear previous match winner info
@@ -610,7 +529,7 @@ function displayGameOver(
     if (isMatchOver) {
         winnerInfoP.innerHTML = `<h2>Match Over!</h2>`;
         if (overallMatchWinnerId) {
-            overallWinnerInfoP.innerHTML = `<h3>Overall Winner: ${getPlayerName(overallMatchWinnerId)}!</h3>`;
+            overallWinnerInfoP.innerHTML = `<h3>Overall Winner: ${overallWinnerName}!</h3>`;
         }
         if (newGameButton) newGameButton.textContent = "Start New Match";
         // Display final scores using the score table component
@@ -621,7 +540,7 @@ function displayGameOver(
     } else { // Round over, but match continues
         winnerInfoP.innerHTML = `<h2>Round ${gRoundNumber} Over!</h2>`;
         if (roundWinnerId) {
-            overallWinnerInfoP.innerHTML = `<h3>Round Winner: ${getPlayerName(roundWinnerId)}</h3>`; 
+            overallWinnerInfoP.innerHTML = `<h3>Round Winner: ${winnerName}</h3>`; 
         }
         if (newGameButton) newGameButton.textContent = "Start Next Round";
         
@@ -641,45 +560,24 @@ function displayGameOver(
     gameOverScreen.style.display = 'flex'; 
 }
 
-
-// Sorting functions (internal versions don't update UI directly, external ones do)
-function sortHandByRankInternal() {
-    gCurrentPlayerHand.sort((a, b) => {
-        if (a.rank !== b.rank) {
-            return a.rank - b.rank;
-        }
-        return a.suit - b.suit; // Secondary sort by suit
-    });
-}
-
-function sortHandBySuitInternal() {
-    gCurrentPlayerHand.sort((a, b) => {
-        if (a.suit !== b.suit) {
-            return a.suit - b.suit;
-        }
-        return a.rank - b.rank; // Secondary sort by rank
-    });
-}
-
 function sortHandByRank() {
     gCurrentSortPreference = 'rank';
-    sortHandByRankInternal();
-    updatePlayerHand(gCurrentPlayerHand, gYourPlayerId); // Redraw hand
+    // This now relies on App.vue to handle the actual sorting logic and re-rendering
+    // We can keep this if other non-Vue parts need to trigger a preference change,
+    // but right now it seems redundant if PlayerControls is the only trigger.
 }
 
 function sortHandBySuit() {
     gCurrentSortPreference = 'suit';
-    sortHandBySuitInternal();
-    updatePlayerHand(gCurrentPlayerHand, gYourPlayerId); // Redraw hand
+     // Similar to sortHandByRank, this is likely redundant.
 }
-
 
 // Helper function to create and populate the score table DOM element (reusable)
 function createScoreTableDOM(
-    players: PlayerInfo[], 
+    players: readonly PlayerInfo[], 
     roundScoresHistory: { [playerId: string]: number }[], 
     currentRoundNum: number, 
-    totalScores: { [playerId: string]: number }, 
+    totalScores: { readonly [playerId: string]: number }, 
     targetScore: number, 
     isFinal: boolean = false
 ): HTMLTableElement {
@@ -726,10 +624,10 @@ function createScoreTableDOM(
 
 // Main function to update the score table in the UI
 function updateScoreTable(
-    players: PlayerInfo[], 
+    players: readonly PlayerInfo[], 
     roundScoresHistory: { [playerId: string]: number }[], 
     currentRoundNum: number, 
-    totalScores: { [playerId: string]: number }, 
+    totalScores: { readonly [playerId: string]: number }, 
     targetScore: number
 ) {
     const scoreTableContainer = document.getElementById('score-table-container') as HTMLDivElement | null;
@@ -750,6 +648,19 @@ function updateScoreTable(
     }
 }
 
+// Export necessary functions for Vue app to call
+export {
+    updatePlayerHand,
+    updateLastPlayed,
+    updateTurnInfo,
+    updatePlayersArea,
+    updateScoreTable,
+    displayGameOver,
+    updateGameMessages,
+    updatePassButtonAppearance,
+    sortHandByRank,
+    sortHandBySuit
+};
 
 document.addEventListener('DOMContentLoaded', () => {
     loadSvgSprite();
@@ -829,4 +740,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         // Note: game-over-screen doesn't have a separate close, only New Game button.
     });
+
+    createApp(App).mount('#app');
 }); 
