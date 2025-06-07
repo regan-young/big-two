@@ -1,6 +1,15 @@
 import { ref, shallowRef, readonly, type Ref } from 'vue';
 import type { ServerMessage } from '@/types'; // Assuming your types are in src/types.ts and you have path alias
 
+// Type guard to check if an object is a valid ServerMessage
+function isServerMessage(data: any): data is ServerMessage {
+  if (data && typeof data === 'object' && typeof data.type === 'string') {
+    const validTypes = ["gameState", "chat", "error", "system", "actionSuccess"];
+    return validTypes.includes(data.type);
+  }
+  return false;
+}
+
 // Define the shape of the composable's return value
 export interface UseWebSocketReturn {
   socket: Readonly<Ref<WebSocket | null>>;
@@ -43,12 +52,13 @@ export function useWebSocket(): UseWebSocketReturn {
       console.log('WebSocket message received:', event.data);
       try {
         const parsedData = JSON.parse(event.data as string);
-        // Basic validation, could be more robust
-        if (parsedData && typeof parsedData === 'object' && parsedData.type) {
-            lastMessage.value = parsedData as ServerMessage;
+        
+        // Use the type guard to validate the message
+        if (isServerMessage(parsedData)) {
+            lastMessage.value = parsedData;
         } else {
-            console.error('Received malformed message (no type or not an object):', parsedData);
-            // Optionally set an error state or emit a specific event
+            console.error('Received malformed message:', parsedData);
+            error.value = new Error('Received malformed WebSocket message.');
         }
       } catch (e) {
         console.error('Error parsing WebSocket message:', e);

@@ -4,7 +4,7 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "vite --host",
     "dev:fullstack": "concurrently \"go run .\" \"npm run dev\"",
     "build": "vite build",
     "preview": "vite preview"
@@ -16,6 +16,7 @@
     "vite": "^5.2.0"
   },
   "dependencies": {
+    "pinia": "^3.0.3",
     "vue": "^3.4.0"
   }
 }

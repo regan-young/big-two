@@ -437,7 +437,7 @@ func main() {
 	deck.Shuffle()
 
 	// === Single Player Debug Mode: Initialize only one player ===
-	const singlePlayerDebug = false // Set to false for multiplayer
+	const singlePlayerDebug = true // Set to false for multiplayer
 	var players []*Player
 	if singlePlayerDebug {
 		log.Println("INFO: Initializing in SINGLE PLAYER debug mode.")

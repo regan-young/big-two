@@ -1,0 +1,99 @@
+name: CI
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build-backend:
+    name: Build Backend
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: '1.22'
+
+    - name: Build
+      run: go build -v -o big-two-binary .
+
+    - name: Test
+      run: go test -v ./...
+
+    - name: Upload backend artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: backend-build
+        path: big-two-binary
+
+  build-frontend:
+    name: Build Frontend
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+
+    - name: Install dependencies
+      run: npm install
+
+    - name: Build
+      run: npm run build
+
+    - name: Upload frontend artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: frontend-build
+        path: dist/
+
+  deploy:
+    name: Deploy
+    needs: [build-backend, build-frontend]
+    runs-on: [self-hosted, debian]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    steps:
+    - name: Download backend artifact
+      uses: actions/download-artifact@v4
+      with:
+        name: backend-build
+
+    - name: Download frontend artifact
+      uses: actions/download-artifact@v4
+      with:
+        name: frontend-build
+
+    - name: Deploy to server
+      run: |
+        echo "Starting deployment..."
+        # --- DEPLOYMENT STEPS ---
+        # These steps assume you have configured permissions on your server
+        # to allow the runner user to perform these actions without a password.
+
+        # Deploy backend:
+        echo "Deploying backend..."
+        chmod +x big-two-binary
+        # Create a directory for the app in the runner's home if it doesn't exist
+        mkdir -p ~/app/
+        # Move the binary to its new home
+        mv big-two-binary ~/app/big-two
+        # Restart the service using the passwordless sudo rule you configured
+        echo "Restarting backend service..."
+        sudo systemctl restart big-two.service
+
+        # Deploy frontend:
+        echo "Deploying frontend..."
+        # The target directory /var/www/big-two should be owned by the runner user.
+        # First, remove old files from the web directory.
+        rm -rf /var/www/big-two/*
+        # Then, copy the new build files from the 'dist' directory.
+        cp -r dist/* /var/www/big-two/
+
+        echo "Deployment complete!" 

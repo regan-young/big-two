@@ -6,12 +6,10 @@
           'current-player': player.id === currentPlayerId,
           'is-you': player.id === yourPlayerId,
           'has-passed': player.hasPassed,
-          'is-out': player.isOut
       }">
         <span>{{ player.name }} ({{ player.cardCount }} cards)</span>
         <span v-if="player.id === yourPlayerId"> (You)</span>
-        <span v-if="player.isOut"> - OUT</span>
-        <span v-if="player.hasPassed && !player.isOut && player.id !== currentPlayerId"> - PASSED</span>
+        <span v-if="player.hasPassed && player.id !== currentPlayerId"> - PASSED</span>
       </li>
     </ul>
     <p v-else>No player information available.</p>
@@ -51,7 +49,6 @@ export default defineComponent({
   padding: 10px;
   margin-bottom: 10px;
   background-color: #f9f9f9;
-  min-width: 200px; /* Ensure it has some base width */
 }
 .players-area-vue h2 {
   margin-top: 0;
@@ -89,10 +86,5 @@ export default defineComponent({
 .has-passed {
   color: #777;
   font-style: italic;
-}
-.is-out {
-    color: #dc3545; /* Red for out players */
-    text-decoration: line-through;
-    background-color: #f8d7da; /* Light red background */
 }
 </style> 

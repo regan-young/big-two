@@ -21,6 +21,14 @@ export interface PlayedHand {
     readonly EffectiveSuit: number;
 }
 
+export type Scores = Record<string, number>;
+
+export interface RoundResult {
+    readonly roundNumber: number;
+    readonly scores: Scores;
+    readonly winnerId?: string;
+}
+
 // Server Message Interfaces
 export interface GameStateMessage {
     readonly type: "gameState";
@@ -32,12 +40,12 @@ export interface GameStateMessage {
     readonly passCount: number;
     readonly playersInfo?: readonly PlayerInfo[];
     readonly isGameOver: boolean;
-    readonly scores?: { readonly [playerId: string]: number };
+    readonly scores?: Scores;
     readonly roundNumber?: number;
     readonly targetScore?: number;
     readonly isMatchOver?: boolean;
     readonly overallWinnerId?: string | null;
-    readonly roundScoresHistory?: { [playerId: string]: number }[];
+    readonly roundScoresHistory?: readonly RoundResult[];
     readonly winnerId: string | null; 
     readonly gameMessage?: string;
 }

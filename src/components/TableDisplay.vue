@@ -6,7 +6,7 @@
         Last played by: {{ lastPlayedHand.playerId }} ({{ lastPlayedHand.handType }})
       </span>
       <span v-else-if="lastPlayedHand && lastPlayedHand.cards && lastPlayedHand.cards.length > 0">
-        Last played by: {{ lastPlayedHand.playerId }} ({{ lastPlayedHand.handType }})
+        Last played by: {{ lastPlayedHand.playerId }} ({{ lastPlayedHand.handTypeString }})
       </span>
       <span v-else>
         Table is clear.
@@ -25,7 +25,7 @@
         <use :xlink:href="`#${suitMap[card.suit]}_${rankMap[card.rank]}`"></use>
       </svg>
       <svg v-else viewBox="0 0 169.075 244.64" class="card card-back">
-          <use xlink:href="#card_back"></use>
+          <use xlink:href="#back"></use>
       </svg>
     </div>
     <div class="turn-info-vue">
@@ -41,7 +41,7 @@
 <script lang="ts">
 import { defineComponent, PropType, computed } from 'vue';
 import { PlayedHand, Card } from '@/types';
-import { rankMap, suitMap } from '@/constants';
+import { rankMap, suitMap } from '@/utils/cardUtils';
 
 export default defineComponent({
   name: 'TableDisplay',
@@ -74,7 +74,6 @@ export default defineComponent({
   padding: 10px;
   margin-bottom: 10px;
   background-color: #f0f0f0; /* Slightly different background */
-  min-width: 300px; /* Ensure it has some base width */
 }
 .table-display-vue h2 {
   margin-top: 0;
@@ -96,9 +95,13 @@ export default defineComponent({
 .card {
   width: 120px; /* Smaller cards for table display */
   height: auto;
-  margin: 2px;
+  margin: 2px 2px 2px -40px;
+}
+.card:first-child {
+  margin-left: 0;
 }
 .card-back {
+    margin-left: 0; /* Center the card back */
     fill: #555; /* Example, if your card_back SVG needs a fill */
     /* Or use an <image> tag within the SVG definition if it's a raster image */
 }

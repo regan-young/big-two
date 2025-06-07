@@ -19,7 +19,7 @@
 <script lang="ts">
 import { defineComponent, PropType, ref, watch, computed } from 'vue';
 import { Card } from '@/types';
-import { rankMap, suitMap } from '@/constants'; // Assuming constants.ts is in src and @ alias is setup
+import { rankMap, suitMap } from '@/utils/cardUtils';
 
 export default defineComponent({
   name: 'PlayerHand',
@@ -41,9 +41,6 @@ export default defineComponent({
 
   setup(props, { emit }) {
     const selectedCardsRef = ref<Card[]>([]); // Store actual Card objects
-
-    const rankMapRef = computed(() => rankMap); // Make maps available to template
-    const suitMapRef = computed(() => suitMap);
 
     const canSelectCards = computed(() => !props.isGameOver && !props.isMatchOver);
 
@@ -89,8 +86,8 @@ export default defineComponent({
       toggleCardSelection,
       isSelected,
       selectedCards: selectedCardsRef, // Expose for parent if needed (though event is preferred for changes)
-      rankMap: rankMapRef, // Use rankMapRef in template as rankMap
-      suitMap: suitMapRef, // Use suitMapRef in template as suitMap
+      rankMap, // Use rankMap in template
+      suitMap, // Use suitMap in template
     };
   },
 });

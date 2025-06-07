@@ -97,32 +97,32 @@ export default defineComponent({
 <style scoped>
 .score-table-vue {
   border: 1px solid #ffc107; /* Yellow/Orange border for distinction */
-  padding: 10px;
+  padding: 5px;
   background-color: #fff9e6;
   border-radius: 4px;
   margin-bottom: 10px;
 }
 .score-table-vue h3, .score-table-vue h4 {
   margin-top: 0;
-  font-size: 1.1em;
+  font-size: 1em;
   color: #555;
-  margin-bottom: 8px;
+  margin-bottom: 5px;
   border-bottom: 1px solid #eee;
-  padding-bottom: 5px;
+  padding-bottom: 3px;
 }
 .score-table-vue h4 {
-    font-size: 1em;
-    margin-top: 15px;
+    font-size: 0.9em;
+    margin-top: 10px;
 }
 
 table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 0.9em;
+  font-size: 0.85em;
 }
 th, td {
   border: 1px solid #ddd;
-  padding: 6px 8px;
+  padding: 4px 6px;
   text-align: left;
 }
 th {
@@ -133,10 +133,10 @@ th {
     text-align: right;
 }
 .round-history-container {
-    margin-top: 15px;
+    margin-top: 10px;
 }
 .round-history-table th, .round-history-table td {
-    font-size: 0.85em;
-    padding: 4px 6px;
+    font-size: 0.8em;
+    padding: 3px 5px;
 }
 </style> 

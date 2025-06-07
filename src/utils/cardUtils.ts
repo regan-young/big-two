@@ -1,3 +1,5 @@
+// src/utils/cardUtils.ts
+
 // Card Rank and Suit mapping (from card.go enums)
 //Go Ranks: Three=3, Four=4, ..., Queen=12, King=13, Ace=14, Two=15
 //SVG Ranks: 1 (Ace), 2-10, jack, queen, king
@@ -10,7 +12,7 @@ export const rankMap: { [key: number]: string } = {
 
 //Go Suits: Diamonds=0, Clubs=1, Hearts=2, Spades=3
 //SVG Suits: diamond, club, heart, spade
-export const suitMap: { [key: number]: string } = {
+export const suitMap: { [key:number]: string } = {
     0: 'diamond',
     1: 'club',
     2: 'heart',

@@ -98,7 +98,6 @@ export default defineComponent({
   gap: 15px;
   padding: 10px;
   background-color: #f8f9fa;
-  min-width: 280px; /* Ensure it has some base width */
 }
 
 .system-messages-container, .chat-container {
